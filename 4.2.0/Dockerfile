@@ -66,9 +66,9 @@ ENV IRODS_VAULT_DIRECTORY=/var/lib/irods/iRODS/Vault
 # Shenanigans to make dockerhub happy
 COPY . /tmp
 RUN cp /tmp/irods-docker-entrypoint.sh /irods-docker-entrypoint.sh \
-    && rm -rf /tmp/*
+    && rm -rf /tmp/* && chmod a+x /irods-docker-entrypoint.sh
 ENV DEBIAN_FRONTEND teletype
-VOLUME /var/lib/irods/iRODS/Vault /etc/irods /var/lib/postgresql/data
+VOLUME /var/lib/irods/iRODS/Vault /etc/irods /var/lib/postgresql/data /var/lib/irods/.irods
 
 EXPOSE $IRODS_PORT $IRODS_CONTROL_PLANE_PORT $IRODS_PORT_RANGE_BEGIN-$IRODS_PORT_RANGE_END
 ENTRYPOINT ["/irods-docker-entrypoint.sh"]
