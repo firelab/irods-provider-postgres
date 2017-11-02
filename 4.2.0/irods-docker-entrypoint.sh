@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
-IRODS_CONFIG_FILE=/irods.config
+RODS_CONFIG_FILE=/irods.config
+ISETUP_IRODS=false
+REJOIN_IRODS=false
+FirstArg="$1"
 
 set_postgres_params() {
     # set postgres-docker-entrypoint.sh variables to coincide with iRODS variables unless explicitly defined
@@ -14,6 +17,15 @@ set_postgres_params() {
     if [[ -z "${POSTGRES_DB}" ]]; then
         gosu root sed -i 's/POSTGRES_DB/IRODS_DATABASE_NAME/g' /postgres-docker-entrypoint.sh
     fi
+}
+
+update_uid_gid() {
+    #groupadd -r irods --gid=998
+    #useradd -r -g irods -d /var/lib/irods --uid=998 irods
+    #gosu root usermod -u ${UID_IRODS} irods
+    #gosu root groupmod -g ${GID_IRODS} irods
+    gosu root chown -R irods:irods /var/lib/irods
+    gosu root chown -R irods:irods /etc/irods
 }
 
 generate_config() {
@@ -44,7 +56,15 @@ generate_config() {
     echo "${IRODS_VAULT_DIRECTORY}" >> ${IRODS_CONFIG_FILE}
 }
 
-if [[ "$1" = 'setup_irods.py' ]]; then
+if [[ "$FirstArg" = 'setup_irods.py' ]]; then
+    SETUP_IRODS=true
+fi
+if [[ "$FirstArg" = 'rejoin_irods' ]]; then
+    REJOIN_IRODS=true
+fi
+
+
+if $SETUP_IRODS; then
     # Configure PostgreSQL
     set_postgres_params
     ./postgres-docker-entrypoint.sh postgres &
@@ -64,8 +84,20 @@ if [[ "$1" = 'setup_irods.py' ]]; then
 
     # Keep container alive
     tail -f /dev/null
+elif $REJOIN_IRODS; then
+    # Configure PostgreSQL
+    #gosu postgres /etc/init.d/psql start
+    # set_postgres_params
+    ./postgres-docker-entrypoint.sh postgres &
+    sleep 10s
+
+    #generate_config
+    update_uid_gid
+    gosu root /etc/init.d/irods start
+    tail -f /dev/null
+    echo"You're in! Welcome back to irods."
 else
-    set_postgres_params
+    echo"What just happened??? I think it is beacuse both Setup and Rejoin variables are still false."
     exec "$@"
 fi
 
