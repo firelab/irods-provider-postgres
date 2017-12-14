@@ -126,6 +126,8 @@ _fixGSI() {
     python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string rcComm_t "/C=US/O=Globus Consortium/OU=Globus Connect Service/CN=60803eee-9fba-11e6-b0de-22000b92c261"
     python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string kerberos_name "irodsserver/vault.firelab.org@FIRELAB.ORG"
     python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string kerberos_keytab "/etc/krb5.keytab"
+    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string irods_default_resource "firelab"
+    python /var/lib/irods/packaging/update_json.py /var/lib/irods/.irods/irods_environment.json string irods_default_resource "firelab"
 }
 
 _iadminCMD() {
@@ -133,9 +135,6 @@ _iadminCMD() {
     iadmin aua rods 'irods@FIRELAB.ORG'
     iadmin aua rods '/C=US/O=Globus Consortium/OU=Globus Connect Service/CN=60803eee-9fba-11e6-b0de-22000b92c261'
     iadmin aua rods '/C=US/O=Globus Consortium/OU=Globus Connect Service/CN=724c37ac-9238-11e6-b079-22000b92c261/CN=irods'
-    iadmin mkuser browe rodsuser
-    iadmin moduser browe password newpass
-    iadmin aua browe '/C=US/O=Globus Consortium/OU=Globus Connect Service/CN=724c37ac-9238-11e6-b079-22000b92c261/CN=browe'
 #    ./irodsctl restart
 }
 

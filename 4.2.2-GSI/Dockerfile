@@ -36,8 +36,6 @@ RUN sudo apt-get install -y globus-proxy-utils
 RUN sudo apt-get install -y globus-gsi-cert-utils-progs
 
 CMD ["/usr/sbin/init"]
-RUN groupadd -r browe --gid=775 \
-    && useradd -r -g browe -m /var/lib/browe -d /var/lib/browe --uid=775 browe
 ENV MYPROXY_SERVER=oauth.firelab.org \
     MYPROXY_SERVER_DN="/C=US/O=Globus Consortium/OU=Globus Connect Service/CN=34fd0cf8-92f8-11e6-b087-22000b92c261"
 RUN myproxy-get-trustroots && \
