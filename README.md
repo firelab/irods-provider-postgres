@@ -349,16 +349,16 @@ Needed files for irods catalog provider with pluggable authenication modules. Th
 In order to use plugable authentication such as GSI(Grid Security Infrastructure), PAM(Pluggable Authentication Module), and KRB(Kerberos) you will need to include certificate files to your directory to be copied into the container. Certificates are generated from a trusted authentication source. Needed packages and container copy paths can be found in the 4.2.2 Dockerfile.
 
 GSI Authentication files - files generated from GSI server
--usercert.pem
--userkey.pem
--dhparams.pem
+- usercert.pem
+- userkey.pem
+- dhparams.pem
 
 PAM Authentication file - file created with needed configuration for etc/pam.d 
--irods
+- irods
 
 Kerberos Authentication files - files generated from Key Distribution Center on Kerberos admin server
--krb5.conf
--krb5.keytab
+- krb5.conf
+- krb5.keytab
 
 **Configuration**
 
