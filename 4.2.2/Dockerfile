@@ -30,6 +30,33 @@ RUN echo "deb http://ftp.debian.org/debian jessie-backports main" \
     irods-runtime=4.2.2  \
     irods-server=4.2.2
 
+# Install GSI environment
+RUN sudo apt-get install -y irods-dev irods-runtime myproxy irods-auth-plugin-gsi
+RUN sudo apt-get install -y globus-proxy-utils
+RUN sudo apt-get install -y globus-gsi-cert-utils-progs
+
+ENV DEBIAN_FRONTEND noninteractive
+# Install KRB environemnt
+RUN apt-get -qq update
+RUN apt-get -qq install irods-auth-plugin-krb
+RUN apt-get -qq install krb5-user
+ENV KERBEROS_NAME=irodsserver/vault.firelab.org@FIRELAB.ORG \
+    KERBEROS_KEYTAB=/etc/krb5.keytab
+RUN sudo apt-get install -y git
+# Install PAM authentication
+RUN sudo apt-get install libpam-krb5
+
+CMD ["/usr/sbin/init"]
+#RUN groupadd -r browe --gid=775 \
+#    && useradd -r -g browe -m /var/lib/browe -d /var/lib/browe --uid=775 browe
+ENV MYPROXY_SERVER=oauth.firelab.org \
+    MYPROXY_SERVER_DN="/C=US/O=Globus Consortium/OU=Globus Connect Service/CN=34fd0cf8-92f8-11e6-b087-22000b92c261"
+RUN myproxy-get-trustroots && \
+    mkdir ~irods/.globus ~irods/.irods
+RUN chown -R irods ~irods /etc/irods && \
+    su irods -c myproxy-get-trustroots
+
+
 # default iRODS env
 ENV IRODS_SERVICE_ACCOUNT_NAME=irods
 ENV IRODS_SERVICE_ACCOUNT_GROUP=irods
@@ -55,7 +82,8 @@ ENV IRODS_SERVER_NEGOTIATION_KEY=TEMPORARY_32byte_negotiation_key
 ENV IRODS_CONTROL_PLANE_KEY=TEMPORARY__32byte_ctrl_plane_key
 ENV IRODS_SERVER_ADMINISTRATOR_PASSWORD=rods
 ENV IRODS_VAULT_DIRECTORY=/var/lib/irods/iRODS/Vault
-# UID / GID settings
+
+#  UID / GID settings
 ENV UID_POSTGRES=999
 ENV GID_POSTGRES=999
 ENV UID_IRODS=998
@@ -65,6 +93,16 @@ ENV GID_IRODS=998
 RUN cd /var/lib/postgresql/data \
     && tar -czvf /postgresql.tar.gz . \
     && cd /
+
+COPY irods /etc/pam.d
+COPY krb5.keytab /etc
+COPY krb5.conf /etc
+COPY dhparams.pem /var/lib/irods/.globus
+COPY usercert.pem /var/lib/irods/.globus
+COPY userkey.pem /var/lib/irods/.globus
+COPY .profile /var/lib/irods
+COPY update_json.py /var/lib/irods/packaging
+COPY irods_environment.json /root/.irods/
 
 # create irods.tar.gz
 RUN cd /var/lib/irods \

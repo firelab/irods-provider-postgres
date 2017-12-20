@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
+IRODS_CONFIG_FILE=/irods.config
 INIT=false
 EXISTING=false
 USAGE=false
@@ -27,6 +28,7 @@ _update_uid_gid() {
         gosu root chown -R postgres:irods /var/lib/postgresql
         gosu root chown -R irods:irods /var/lib/irods
         gosu root chown -R irods:irods /etc/irods
+        gosu root chown -R irods:irods /etc/krb5*
     else
     # if GID_POSTGRES != GID_IRODS, reassign individual GIDs
         if [[ ${GID_IRODS} = 999 ]]; then
@@ -37,6 +39,7 @@ _update_uid_gid() {
         gosu root chown -R postgres:postgres /var/lib/postgresql
         gosu root chown -R irods:irods /var/lib/irods
         gosu root chown -R irods:irods /etc/irods
+	gosu root chown -R irods:irods /etc/krb5*
      fi
 }
 
@@ -84,31 +87,65 @@ _irods_tgz() {
 }
 
 _generate_config() {
-    local OUTFILE=/irods.config
-    echo "${IRODS_SERVICE_ACCOUNT_NAME}" > $OUTFILE
-    echo "${IRODS_SERVICE_ACCOUNT_GROUP}" >> $OUTFILE
-    echo "${IRODS_SERVER_ROLE}" >> $OUTFILE # 1. provider, 2. consumer
-    echo "${ODBC_DRIVER_FOR_POSTGRES}" >> $OUTFILE # 1. PostgreSQL ANSI, 2. PostgreSQL Unicode
-    echo "${IRODS_DATABASE_SERVER_HOSTNAME}" >> $OUTFILE
-    echo "${IRODS_DATABASE_SERVER_PORT}" >> $OUTFILE
-    echo "${IRODS_DATABASE_NAME}" >> $OUTFILE
-    echo "${IRODS_DATABASE_USER_NAME}" >> $OUTFILE
-    echo "yes" >> $OUTFILE
-    echo "${IRODS_DATABASE_PASSWORD}" >> $OUTFILE
-    echo "${IRODS_DATABASE_USER_PASSWORD_SALT}" >> $OUTFILE
-    echo "${IRODS_ZONE_NAME}" >> $OUTFILE
-    echo "${IRODS_PORT}" >> $OUTFILE
-    echo "${IRODS_PORT_RANGE_BEGIN}" >> $OUTFILE
-    echo "${IRODS_PORT_RANGE_END}" >> $OUTFILE
-    echo "${IRODS_CONTROL_PLANE_PORT}" >> $OUTFILE
-    echo "${IRODS_SCHEMA_VALIDATION}" >> $OUTFILE
-    echo "${IRODS_SERVER_ADMINISTRATOR_USER_NAME}" >> $OUTFILE
-    echo "yes" >> $OUTFILE
-    echo "${IRODS_SERVER_ZONE_KEY}" >> $OUTFILE
-    echo "${IRODS_SERVER_NEGOTIATION_KEY}" >> $OUTFILE
-    echo "${IRODS_CONTROL_PLANE_KEY}" >> $OUTFILE
-    echo "${IRODS_SERVER_ADMINISTRATOR_PASSWORD}" >> $OUTFILE
-    echo "${IRODS_VAULT_DIRECTORY}" >> $OUTFILE
+    DATABASE_HOSTNAME_OR_IP=$(/sbin/ip -f inet -4 -o addr | grep eth | cut -d '/' -f 1 | rev | cut -d ' ' -f 1 | rev)
+    echo "${IRODS_SERVICE_ACCOUNT_NAME}" > ${IRODS_CONFIG_FILE}
+    echo "${IRODS_SERVICE_ACCOUNT_GROUP}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_SERVER_ROLE}" >> ${IRODS_CONFIG_FILE} # 1. provider, 2. consumer
+    echo "${ODBC_DRIVER_FOR_POSTGRES}" >> ${IRODS_CONFIG_FILE} # 1. PostgreSQL ANSI, 2. PostgreSQL Unicode
+    echo "${IRODS_DATABASE_SERVER_HOSTNAME}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_DATABASE_SERVER_PORT}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_DATABASE_NAME}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_DATABASE_USER_NAME}" >> ${IRODS_CONFIG_FILE}
+    echo "yes" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_DATABASE_PASSWORD}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_DATABASE_USER_PASSWORD_SALT}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_ZONE_NAME}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_PORT}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_PORT_RANGE_BEGIN}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_PORT_RANGE_END}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_CONTROL_PLANE_PORT}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_SCHEMA_VALIDATION}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_SERVER_ADMINISTRATOR_USER_NAME}" >> ${IRODS_CONFIG_FILE}
+    echo "yes" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_SERVER_ZONE_KEY}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_SERVER_NEGOTIATION_KEY}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_CONTROL_PLANE_KEY}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_SERVER_ADMINISTRATOR_PASSWORD}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_VAULT_DIRECTORY}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_SSL_CERTIFICATE_CHAIN_FILE}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_SSL_CERTIFICATE_KEY_FILE}" >> ${IRODS_CONFIG_FILE}
+    echo "${IRODS_SSL_DH_PARAMS_FILE}" >> ${IRODS_CONFIG_FILE}
+}
+
+
+_fixGSI() { 
+    python /var/lib/irods/packaging/update_json.py /var/lib/irods/.irods/irods_environment.json string irods_authentication_scheme "GSI"
+    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string MYPROXY_SERVER_DN " /C=US/O=Globus Consortium/OU=Globus Connect Service/CN=34fd0cf8-92f8-11e6-b087-22000b92c261"
+    python /var/lib/irods/packaging/update_json.py /var/lib/irods/.irods/irods_environment.json string X509_USER_CERT "/var/lib/irods/.globus/usercert.pem"
+    python /var/lib/irods/packaging/update_json.py /var/lib/irods/.irods/irods_environment.json string X509_USER_KEY "/var/lib/irods/.globus/userkey.pem"
+    python /var/lib/irods/packaging/update_json.py /var/lib/irods/.irods/irods_environment.json string X509_CERT_DIR "/var/lib/irods/.globus/certificates"
+    python /var/lib/irods/packaging/update_json.py /var/lib/irods/.irods/irods_environment.json string irods_ssl_dh_params_file "/var/lib/irods/.globus/dhparams.pem"
+    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string zone_auth_scheme "GSI"
+    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string rcComm_t "/C=US/O=Globus Consortium/OU=Globus Connect Service/CN=60803eee-9fba-11e6-b0de-22000b92c261"
+    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string KerberosServicePrincipal "irodsserver/vault.firelab.org@FIRELAB.ORG"
+    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string KerberosKeytab "/etc/krb5.keytab"
+    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string environment_variables,KRB5_KTNAME "/etc/krb5.keytab"
+    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string irods_default_resource "firelab"
+    python /var/lib/irods/packaging/update_json.py /var/lib/irods/.irods/irods_environment.json string irods_default_resource "firelab"
+}
+
+_iadminCMD() {
+    iinit rods
+    iadmin aua rods 'irods@FIRELAB.ORG'
+    iadmin aua rods '/C=US/O=Globus Consortium/OU=Globus Connect Service/CN=60803eee-9fba-11e6-b0de-22000b92c261'
+    iadmin aua rods '/C=US/O=Globus Consortium/OU=Globus Connect Service/CN=724c37ac-9238-11e6-b079-22000b92c261/CN=irods'
+
+#This user is added for testing purposes
+    iadmin mkuser browe rodsuser
+    iadmin moduser browe password newpass
+    iadmin aua browe '/C=US/O=Globus Consortium/OU=Globus Connect Service/CN=724c37ac-9238-11e6-b079-22000b92c261/CN=browe'
+    iadmin aua browe 'browe@FIRELAB.ORG'
+#    ./irodsctl restart
 }
 
 _usage() {
@@ -161,8 +198,10 @@ if $RUN_IRODS; then
         done
         sleep 2s
         _generate_config
-        gosu root python /var/lib/irods/scripts/setup_irods.py < /irods.config
+        gosu root python /var/lib/irods/scripts/setup_irods.py < ${IRODS_CONFIG_FILE}
         _update_uid_gid
+        _iadminCMD
+        _fixGSI
         if $VERBOSE; then
             echo "INFO: show ienv"
             gosu irods ienv
@@ -178,7 +217,7 @@ if $RUN_IRODS; then
         done
         gosu root service irods start
         gosu root tail -f /dev/null
-    fi
+   fi
 else
     if $USAGE; then
         _usage

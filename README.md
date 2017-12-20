@@ -333,6 +333,33 @@ In this example we will be using a VM on a private VLAN (not publicly accessible
 	- host: `/var/provider/etc_irods` to docker - `/etc/irods`
 	- host: `/var/provider/pg_data` to docker - `/var/lib/postgresql/data`
 
+Needed files for irods catalog provider with pluggable authenication modules. These files are not included in docker image and must be provided. 
+
+- usercert.pem
+- userkey.pem
+- dhparams.pem
+- irods
+- krb5.conf
+- krb5.keytab
+- irods-provider.env
+- irods_environment.json
+
+**Authentication Configuration**
+
+In order to use plugable authentication such as GSI(Grid Security Infrastructure), PAM(Pluggable Authentication Module), and KRB(Kerberos) you will need to include certificate files to your directory to be copied into the container. Certificates are generated from a trusted authentication source. Needed packages and container copy paths can be found in the 4.2.2 Dockerfile.
+
+GSI Authentication files - files generated from GSI server
+-usercert.pem
+-userkey.pem
+-dhparams.pem
+
+PAM Authentication file - file created with needed configuration for etc/pam.d 
+-irods
+
+Kerberos Authentication files - files generated from Key Distribution Center on Kerberos admin server
+-krb5.conf
+-krb5.keytab
+
 **Configuration**
 
 Create an environment file that captures the essence of what you want to deploy. In this example this has been named `irods-provider.env`. The file only needs to contain the values that are being changed from the default, but all are shown here for completeness.
