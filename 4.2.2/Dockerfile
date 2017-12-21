@@ -31,20 +31,20 @@ RUN echo "deb http://ftp.debian.org/debian jessie-backports main" \
     irods-server=4.2.2
 
 # Install GSI environment
-RUN sudo apt-get install -y irods-dev irods-runtime myproxy irods-auth-plugin-gsi
-RUN sudo apt-get install -y globus-proxy-utils
-RUN sudo apt-get install -y globus-gsi-cert-utils-progs
+RUN apt-get install -y irods-dev irods-runtime myproxy irods-auth-plugin-gsi
+RUN apt-get install -y globus-proxy-utils
+RUN apt-get install -y globus-gsi-cert-utils-progs
 
-ENV DEBIAN_FRONTEND noninteractive
 # Install KRB environemnt
+ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get -qq update
 RUN apt-get -qq install irods-auth-plugin-krb
 RUN apt-get -qq install krb5-user
 ENV KERBEROS_NAME=irodsserver/vault.firelab.org@FIRELAB.ORG \
     KERBEROS_KEYTAB=/etc/krb5.keytab
-RUN sudo apt-get install -y git
+RUN apt-get install -y git
 # Install PAM authentication
-RUN sudo apt-get install libpam-krb5
+RUN apt-get install libpam-krb5
 
 CMD ["/usr/sbin/init"]
 #RUN groupadd -r browe --gid=775 \
@@ -102,7 +102,6 @@ COPY usercert.pem /var/lib/irods/.globus
 COPY userkey.pem /var/lib/irods/.globus
 COPY .profile /var/lib/irods
 COPY update_json.py /var/lib/irods/packaging
-COPY irods_environment.json /root/.irods/
 
 # create irods.tar.gz
 RUN cd /var/lib/irods \
