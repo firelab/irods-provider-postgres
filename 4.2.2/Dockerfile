@@ -102,6 +102,7 @@ COPY usercert.pem /var/lib/irods/.globus
 COPY userkey.pem /var/lib/irods/.globus
 COPY .profile /var/lib/irods
 COPY update_json.py /var/lib/irods/packaging
+COPY irods_environment.json /root/.irods/
 
 # create irods.tar.gz
 RUN cd /var/lib/irods \
