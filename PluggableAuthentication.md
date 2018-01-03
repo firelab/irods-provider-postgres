@@ -38,4 +38,5 @@ Needed files for irods catalog provider with pluggable authenication modules. Th
 - krb5.keytab
 - irods-provider.env
 - irods_environment.json
+- .profile
 
