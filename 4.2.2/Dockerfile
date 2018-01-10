@@ -103,7 +103,6 @@ COPY userkey.pem /var/lib/irods/.globus
 COPY .profile /var/lib/irods
 COPY update_json.py /var/lib/irods/packaging
 COPY irods_environment.json /root/.irods/
-COPY icatdb /var/lib/irods
 
 # create irods.tar.gz
 RUN cd /var/lib/irods \
