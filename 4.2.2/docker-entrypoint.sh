@@ -128,8 +128,8 @@ _fixGSI() {
     python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string KerberosServicePrincipal "irodsserver/vault.firelab.org@FIRELAB.ORG"
     python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string KerberosKeytab "/etc/krb5.keytab"
     python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string environment_variables,KRB5_KTNAME "/etc/krb5.keytab"
-    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string irods_default_resource "firelab"
-    python /var/lib/irods/packaging/update_json.py /var/lib/irods/.irods/irods_environment.json string irods_default_resource "firelab"
+    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json string default_resource_name "firelab"
+    python /var/lib/irods/packaging/update_json.py /etc/irods/server_config.json  string default_resource_directory "${IRODS_VAULT_DIRECTORY}"
 }
 
 _iadminCMD() {
