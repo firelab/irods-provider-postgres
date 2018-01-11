@@ -145,6 +145,13 @@ _iadminCMD() {
     iadmin aua browe 'browe@FIRELAB.ORG'
 #    ./irodsctl restart
 }
+# Create a directory that is symlinked to the irods file storage location for irods files to be mounted to.
+_symlink() {
+    mkdir /var/rodsfiles
+    chown irods /var/rodsfiles
+    rm -rf /var/lib/irods/iRODS/Vault
+    ln -s /var/rodsfiles /var/lib/irods/iRODS/Vault
+}
 
 _usage() {
     echo "Usage: ${0} [-h] [-ix run_irods] [-v] [arguments]"
@@ -200,6 +207,7 @@ if $RUN_IRODS; then
         _update_uid_gid
         _iadminCMD
         _fixGSI
+	_symlink
         if $VERBOSE; then
             echo "INFO: show ienv"
             gosu irods ienv
